@@ -134,7 +134,6 @@ class plotter:
                     yticklabels[idx].set_text("$\\mathdefault{-\\infty}$")
             ax[i].set_yticklabels(yticklabels)
             ax[i].legend(loc=4)
-            ax[i].grid(which="both", axis="both")
             ax[i].set_ylabel("Amplitude [dB]")
             ax[i].set_xlabel("Samples")
             i += 1
@@ -149,15 +148,7 @@ class plotter:
                 label=impulse_dict["title"],
             )
             ax[i].set_title("impulse frequency characteristic")
-            ax[i].axvline(
-                important_freq,
-                color="red",
-                linestyle="--",
-                label="important frequency",
-                linewidth=0.5,
-            )
             ax[i].legend()
-            ax[i].grid(which="both", axis="both")
             ax[i].set_xscale("log")
             ax[i].set_xlabel("Frequency [Hz]")
             ax[i].set_ylabel("Amplitude [dB]")
@@ -175,15 +166,7 @@ class plotter:
             ax[i].set_title("impulse phase characteristic")
             ax[i].set_ylim(-200, 200)
             ax[i].set_yticks(np.arange(-180, 181, 45))
-            ax[i].axvline(
-                important_freq,
-                color="red",
-                linestyle="--",
-                label="important frequency",
-                linewidth=0.5,
-            )
             ax[i].legend()
-            ax[i].grid(which="both", axis="both")
             ax[i].set_xscale("log")
             ax[i].set_xlabel("Frequency [Hz]")
             ax[i].set_ylabel("Phase [degree]")
@@ -198,17 +181,10 @@ class plotter:
                 20
                 * np.log10(np.abs(sine_wave_fft[plot_index]) / sine_wave_fft_max_value),
                 label=impulse_dict["title"],
-            )
-            ax[i].set_title("distortion frequency characteristic")
-            ax[i].axvline(
-                important_freq,
-                color="red",
-                linestyle="--",
-                label="important frequency",
                 linewidth=0.5,
             )
+            ax[i].set_title("distortion frequency characteristic")
             ax[i].legend()
-            ax[i].grid(which="both", axis="both")
             ax[i].set_xscale("log")
             ax[i].set_xlabel("Frequency [Hz]")
             ax[i].set_ylabel("Amplitude [dB]")
@@ -227,15 +203,7 @@ class plotter:
                 label=impulse_dict["title"],
             )
             ax[i].set_title("impulse frequency characteristic (zoom in)")
-            ax[i].axvline(
-                important_freq,
-                color="red",
-                linestyle="--",
-                label="important frequency",
-                linewidth=0.5,
-            )
             ax[i].legend()
-            ax[i].grid(which="both", axis="both")
             ax[i].set_xscale("log")
             ax[i].set_xlabel("Frequency [Hz]")
             ax[i].set_ylabel("Amplitude [dB]")
@@ -249,19 +217,22 @@ class plotter:
             ax[i].set_title("impulse frequency characteristic (zoom in)")
             ax[i].set_ylim(-24, 1)
             ax[i].set_yticks(np.arange(-24, 1, 3))
-            ax[i].axvline(
-                important_freq,
-                color="red",
-                linestyle="--",
-                label="important frequency",
-                linewidth=0.5,
-            )
             ax[i].legend()
-            ax[i].grid(which="both", axis="both")
             ax[i].set_xscale("log")
             ax[i].set_xlabel("Frequency [Hz]")
             ax[i].set_ylabel("Amplitude [dB]")
             i += 1
+
+        for idx, a in enumerate(ax):
+            a.grid(which="both", axis="both")
+            if idx > 0:
+                a.axvline(
+                    important_freq,
+                    color="red",
+                    linestyle="--",
+                    label="important frequency",
+                    linewidth=0.5,
+                )
 
         plt.savefig(os.path.join(self.output_dir, "impulse_freq_characteristic.png"))
         plt.savefig(os.path.join(self.output_dir, "impulse_freq_characteristic.pdf"))
