@@ -1,7 +1,7 @@
 import numpy as np
+import scipy.fft
 import os
 import module.io as io
-import module.windows as windows
 
 
 class generator:
@@ -68,10 +68,9 @@ class generator:
         """
         t = np.arange(length, dtype=np.longdouble) / self.sample_rate
         sine_wave = np.sin(2 * np.pi * frequency * t, dtype=np.longdouble)
-        window = (
-            windows.gaussian_longdouble(length, 100000) if window is None else window
-        )
-        sine_wave = sine_wave * window
+
+        if window is not None:
+            sine_wave = sine_wave * window
 
         self.io.save_wav(
             os.path.join(self.output_dir, "sine.wav"),

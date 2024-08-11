@@ -1,12 +1,16 @@
 from typing import TypedDict
 import numpy as np
 from matplotlib import pyplot as plt
+import matplotlib as mpl
 import os
 import scipy.fft
 
+mpl.rcParams["agg.path.chunksize"] = 100000
 
-class ImpulseDict(TypedDict):
+
+class AnalyzeDict(TypedDict):
     impulse: np.ndarray
+    sine_wave: np.ndarray
     title: str
 
 
@@ -85,20 +89,20 @@ class plotter:
 
         plt.savefig(os.path.join(self.output_dir, "window_spectrum.png"))
 
-    def plot_multi_impulse_response(
+    def plot_analysis_result(
         self,
-        impulse_dict_list: list[ImpulseDict],
+        impulse_dict_list: list[AnalyzeDict],
         sample_rate: float,
         zoom: int = 50,
         important_freq: float = 200,
     ):
 
-        fig, ax = plt.subplots(figsize=(20, 25), layout="constrained", nrows=4)
+        fig, ax = plt.subplots(figsize=(20, 35), layout="constrained", nrows=6)
 
         for impulse_dict in impulse_dict_list:
             i = 0
             impulse = impulse_dict["impulse"]
-            impulse_fft = np.fft.fft(impulse)
+            impulse_fft = scipy.fft.fft(impulse)
             impulse_fft_freq = np.fft.fftfreq(len(impulse_fft), 1 / sample_rate)
 
             plot_index_start = len(impulse) // 2 - zoom
@@ -118,6 +122,21 @@ class plotter:
             )
             ax[i].set_yscale("symlog", linthresh=1e-150)
             ax[i].set_ylim(-second_max_value, second_max_value)
+            yticklabels = ax[i].get_yticklabels()
+            for idx in range(len(yticklabels)):
+                text = yticklabels[idx].get_text()
+                if "{-10^" in text:
+                    yticklabels[idx].set_text("$\\mathdefault{" + text[18:-2] + "}$")
+                elif "{10^" in text:
+                    yticklabels[idx].set_text("$\\mathdefault{" + text[17:-2] + "}$")
+
+                elif text == "$\\mathdefault{0}$":
+                    yticklabels[idx].set_text("$\\mathdefault{-\\infty}$")
+            ax[i].set_yticklabels(yticklabels)
+            ax[i].legend(loc=4)
+            ax[i].grid(which="both", axis="both")
+            ax[i].set_ylabel("Amplitude [dB]")
+            ax[i].set_xlabel("Samples")
             i += 1
 
             plot_index = np.where(
@@ -130,6 +149,69 @@ class plotter:
                 label=impulse_dict["title"],
             )
             ax[i].set_title("impulse frequency characteristic")
+            ax[i].axvline(
+                important_freq,
+                color="red",
+                linestyle="--",
+                label="important frequency",
+                linewidth=0.5,
+            )
+            ax[i].legend()
+            ax[i].grid(which="both", axis="both")
+            ax[i].set_xscale("log")
+            ax[i].set_xlabel("Frequency [Hz]")
+            ax[i].set_ylabel("Amplitude [dB]")
+            i += 1
+
+            # plot phase responce
+            rolled_impulse = np.roll(impulse, len(impulse) // 2)
+            rolled_impulse_fft = scipy.fft.fft(rolled_impulse)
+            impulse_phase = np.angle(rolled_impulse_fft, deg=True)
+            ax[i].plot(
+                impulse_fft_freq[plot_index],
+                impulse_phase[plot_index],
+                label=impulse_dict["title"],
+            )
+            ax[i].set_title("impulse phase characteristic")
+            ax[i].set_ylim(-200, 200)
+            ax[i].set_yticks(np.arange(-180, 181, 45))
+            ax[i].axvline(
+                important_freq,
+                color="red",
+                linestyle="--",
+                label="important frequency",
+                linewidth=0.5,
+            )
+            ax[i].legend()
+            ax[i].grid(which="both", axis="both")
+            ax[i].set_xscale("log")
+            ax[i].set_xlabel("Frequency [Hz]")
+            ax[i].set_ylabel("Phase [degree]")
+            i += 1
+
+            # sine wave
+            sine_wave_fft = scipy.fft.fft(impulse_dict["sine_wave"])
+            sine_wave_fft_freq = np.fft.fftfreq(len(sine_wave_fft), 1 / sample_rate)
+            sine_wave_fft_max_value = np.max(np.abs(sine_wave_fft[plot_index]))
+            ax[i].plot(
+                sine_wave_fft_freq[plot_index],
+                20
+                * np.log10(np.abs(sine_wave_fft[plot_index]) / sine_wave_fft_max_value),
+                label=impulse_dict["title"],
+            )
+            ax[i].set_title("distortion frequency characteristic")
+            ax[i].axvline(
+                important_freq,
+                color="red",
+                linestyle="--",
+                label="important frequency",
+                linewidth=0.5,
+            )
+            ax[i].legend()
+            ax[i].grid(which="both", axis="both")
+            ax[i].set_xscale("log")
+            ax[i].set_xlabel("Frequency [Hz]")
+            ax[i].set_ylabel("Amplitude [dB]")
             i += 1
 
             # zoom in
@@ -145,6 +227,18 @@ class plotter:
                 label=impulse_dict["title"],
             )
             ax[i].set_title("impulse frequency characteristic (zoom in)")
+            ax[i].axvline(
+                important_freq,
+                color="red",
+                linestyle="--",
+                label="important frequency",
+                linewidth=0.5,
+            )
+            ax[i].legend()
+            ax[i].grid(which="both", axis="both")
+            ax[i].set_xscale("log")
+            ax[i].set_xlabel("Frequency [Hz]")
+            ax[i].set_ylabel("Amplitude [dB]")
             i += 1
 
             ax[i].plot(
@@ -155,43 +249,19 @@ class plotter:
             ax[i].set_title("impulse frequency characteristic (zoom in)")
             ax[i].set_ylim(-24, 1)
             ax[i].set_yticks(np.arange(-24, 1, 3))
+            ax[i].axvline(
+                important_freq,
+                color="red",
+                linestyle="--",
+                label="important frequency",
+                linewidth=0.5,
+            )
+            ax[i].legend()
+            ax[i].grid(which="both", axis="both")
+            ax[i].set_xscale("log")
+            ax[i].set_xlabel("Frequency [Hz]")
+            ax[i].set_ylabel("Amplitude [dB]")
             i += 1
-
-        # draw axvline to show important freq
-        for i in range(len(ax)):
-            if i == 0:
-                yticklabels = ax[i].get_yticklabels()
-                for idx in range(len(yticklabels)):
-                    text = yticklabels[idx].get_text()
-                    if "{-10^" in text:
-                        yticklabels[idx].set_text(
-                            "$\\mathdefault{" + text[18:-2] + "}$"
-                        )
-                    elif "{10^" in text:
-                        yticklabels[idx].set_text(
-                            "$\\mathdefault{" + text[17:-2] + "}$"
-                        )
-
-                    elif text == "$\\mathdefault{0}$":
-                        yticklabels[idx].set_text("$\\mathdefault{-\\infty}$")
-                ax[i].set_yticklabels(yticklabels)
-                ax[i].legend(loc=4)
-                ax[i].grid(which="both", axis="both")
-                ax[i].set_ylabel("Amplitude [dB]")
-                ax[i].set_xlabel("Samples")
-            if i == 1 or i == 2 or i == 3:
-                ax[i].axvline(
-                    important_freq,
-                    color="red",
-                    linestyle="--",
-                    label="important frequency",
-                    linewidth=0.5,
-                )
-                ax[i].legend()
-                ax[i].grid(which="both", axis="both")
-                ax[i].set_xscale("log")
-                ax[i].set_xlabel("Frequency [Hz]")
-                ax[i].set_ylabel("Amplitude [dB]")
 
         plt.savefig(os.path.join(self.output_dir, "impulse_freq_characteristic.png"))
         plt.savefig(os.path.join(self.output_dir, "impulse_freq_characteristic.pdf"))

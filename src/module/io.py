@@ -28,7 +28,7 @@ class io:
         assert os.path.splitext(filepath)[1] == ".wav", f"file is not wav: {filepath}"
         wavfile.write(filepath, sample_rate, audio_data_64bf)
 
-    def load_wav_as_mono(filepath: str):
+    def load_wav_as_mono(self, filepath: str):
         """
         Loads a WAV file and returns the audio data as mono.
 

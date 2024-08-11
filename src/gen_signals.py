@@ -3,11 +3,15 @@ import module.printer as printer
 import module.plotter as plotter
 import os
 import time
+import module.windows as windows
+from scipy.signal import windows as scipy_windows
+
 
 CONFIG = {
     "sample_rate": 48000,
     "signal_length": 2**22,
     "sine_wave_freq": 1000,
+    "should_apply_window_to_sine_wave": True,
     "output_dir": os.path.join("output_signals", time.strftime("%Y%m%d-%H%M%S")),
 }
 
@@ -28,17 +32,27 @@ def main():
 
     p.print_message("Generating sine wave...")
     _, window = gen.generate_sine_wave(
-        CONFIG["sine_wave_freq"], CONFIG["signal_length"]
+        CONFIG["sine_wave_freq"],
+        CONFIG["signal_length"],
+        window=(
+            windows.gaussian_longdouble(CONFIG["signal_length"], 200000)
+            # scipy_windows.nuttall(CONFIG["signal_length"])
+            # * scipy_windows.kaiser(CONFIG["signal_length"], 20)
+            # scipy_windows.chebwin(CONFIG["signal_length"], 400)
+            if CONFIG["should_apply_window_to_sine_wave"]
+            else None
+        ),
     )
 
-    p.print_message("Plotting window...")
-    plot = plotter.plotter(CONFIG["output_dir"])
-    plot.plot_window(
-        [{"title": "default window", "window": window}], CONFIG["sample_rate"]
-    )
-    plot.plot_window_spectrum(
-        [{"title": "default window", "window": window}], CONFIG["sample_rate"]
-    )
+    if CONFIG["should_apply_window_to_sine_wave"]:
+        p.print_message("Plotting window...")
+        plot = plotter.plotter(CONFIG["output_dir"])
+        plot.plot_window(
+            [{"title": "default window", "window": window}], CONFIG["sample_rate"]
+        )
+        plot.plot_window_spectrum(
+            [{"title": "default window", "window": window}], CONFIG["sample_rate"]
+        )
 
     p.print_message("Done!")
 
