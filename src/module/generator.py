@@ -20,6 +20,7 @@ class generator:
         length: int,
         start_frequency: float,
         end_frequency: float,
+        amplitude_dBFS: float,
         log_scale: bool = True,
     ):
         """
@@ -35,6 +36,8 @@ class generator:
             The start frequency of the sine wave sweep, in Hertz.
         end_frequency : float
             The end frequency of the sine wave sweep, in Hertz.
+        amplitude_dBFS : float
+            The amplitude of the sine wave sweep, in decibels relative to full scale.
         log_scale : bool, optional
             If True, the sweep is generated in a logarithmic scale. If False, it is generated in a linear scale.
 
@@ -53,6 +56,8 @@ class generator:
             sweep = scipy.signal.chirp(
                 t, start_frequency, t[-1], end_frequency, method="linear", phi=-90
             )
+
+        sweep = sweep * 10 ** (amplitude_dBFS / 20)
 
         self.io.save_wav(
             os.path.join(self.output_dir, "sweep.wav"),
@@ -91,7 +96,11 @@ class generator:
         return impulse
 
     def generate_sine_wave(
-        self, frequency: float, length: int, window: np.ndarray = None
+        self,
+        frequency: float,
+        length: int,
+        amplitude_dBFS: float,
+        window: np.ndarray = None,
     ):
         """
         Generates a sine wave signal and saves it as a WAV file.
@@ -104,6 +113,8 @@ class generator:
             The frequency of the sine wave, in Hertz.
         length : int
             The length of the sine wave signal, in samples.
+        amplitude_dBFS : float
+            The amplitude of the sine wave, in decibels relative to full scale.
         window : np.ndarray, optional
             The window to apply to the sine wave signal. If not provided, a Gaussian window is used.
 
@@ -118,6 +129,8 @@ class generator:
 
         if window is not None:
             sine_wave = sine_wave * window
+
+        sine_wave = sine_wave * 10 ** (amplitude_dBFS / 20)
 
         self.io.save_wav(
             os.path.join(self.output_dir, "sine.wav"),
