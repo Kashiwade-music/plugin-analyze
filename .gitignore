@@ -1,5 +1,6 @@
 output_signals/
 output_analyze/
+output_analyze_sweep/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
