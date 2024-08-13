@@ -11,6 +11,9 @@ CONFIG = {
     "sample_rate": 48000,
     "signal_length": 2**22,
     "sine_wave_freq": 1000,
+    "sweep_start_freq": 1,
+    "sweep_end_freq": 20000,
+    "sweep_is_log_scale": True,
     "should_apply_window_to_sine_wave": True,
     "output_dir": os.path.join("output_signals", time.strftime("%Y%m%d-%H%M%S")),
 }
@@ -23,6 +26,9 @@ def main():
     p.print_message(f"sample_rate: {CONFIG['sample_rate']}")
     p.print_message(f"signal_length: {CONFIG['signal_length']}")
     p.print_message(f"sine_wave_freq: {CONFIG['sine_wave_freq']}")
+    p.print_message(f"sweep_start_freq: {CONFIG['sweep_start_freq']}")
+    p.print_message(f"sweep_end_freq: {CONFIG['sweep_end_freq']}")
+    p.print_message(f"sweep_is_log_scale: {CONFIG['sweep_is_log_scale']}")
     p.print_message(f"output_dir: '{CONFIG['output_dir']}'")
 
     gen = generator.generator(CONFIG["sample_rate"], CONFIG["output_dir"])
@@ -53,6 +59,14 @@ def main():
         plot.plot_window_spectrum(
             [{"title": "default window", "window": window}], CONFIG["sample_rate"]
         )
+
+    p.print_message("Generating sweep...")
+    gen.generate_sweep_up(
+        CONFIG["signal_length"],
+        CONFIG["sweep_start_freq"],
+        CONFIG["sweep_end_freq"],
+        log_scale=CONFIG["sweep_is_log_scale"],
+    )
 
     p.print_message("Done!")
 
