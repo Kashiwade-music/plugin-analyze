@@ -2,6 +2,7 @@ from typing import TypedDict
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib as mpl
+import matplotlib.mlab as mlab
 import os
 import scipy.fft
 
@@ -11,6 +12,11 @@ mpl.rcParams["agg.path.chunksize"] = 100000
 class AnalyzeDict(TypedDict):
     impulse: np.ndarray
     sine_wave: np.ndarray
+    title: str
+
+
+class AnalyzeSweepDict(TypedDict):
+    sweep: np.ndarray
     title: str
 
 
@@ -236,3 +242,30 @@ class plotter:
 
         plt.savefig(os.path.join(self.output_dir, "impulse_freq_characteristic.png"))
         plt.savefig(os.path.join(self.output_dir, "impulse_freq_characteristic.pdf"))
+
+    def plot_mono_audio_spectrogram(
+        self,
+        audio: np.ndarray,
+        sample_rate: int,
+        is_log_scale: bool = True,
+        prefix: str = "",
+    ):
+        fig, ax = plt.subplots(figsize=(30, 15), layout="constrained")
+        Pxx, freq, t = mlab.specgram(
+            audio,
+            NFFT=8192 * 2,
+            Fs=sample_rate,
+            noverlap=8192,
+        )
+        Pxx_max = np.max(np.abs(Pxx))
+        mesh = ax.pcolormesh(t, freq, 20 * np.log10(Pxx / Pxx_max), cmap="magma")
+        cb = fig.colorbar(mesh, ax=ax)
+        cb.set_label("Intensity [dB]")
+        mesh.set_clim(-200, 0)
+        ax.set_xlabel("Time [s]")
+        ax.set_ylabel("Frequency [Hz]")
+        if is_log_scale:
+            ax.set_yscale("log")
+        ax.set_ylim(20, sample_rate / 2)
+        plt.savefig(os.path.join(self.output_dir, f"{prefix}audio_spectrogram.png"))
+        # plt.savefig(os.path.join(self.output_dir, f"{prefix}audio_spectrogram.pdf"))
